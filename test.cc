@@ -25,12 +25,13 @@ NS_LOG_COMPONENT_DEFINE ("test");
 int
 main (int argc, char *argv[])
 {
-    #if 1
-        LogComponentEnable ("test", LOG_LEVEL_INFO);
-    #endif
-
-    uint32_t packet_size = 2048;
+//    #if 1
+//        LogComponentEnable ("test", LOG_LEVEL_INFO);
+//    #endif
+    double prob_rate = 3000000;
+    uint32_t packet_size = 2048 / 8;
     uint64_t channel_capacity = 50000000;
+    uint32_t prob_nBytesInPacket = 200;
 
     // Set up some default values for the simulation.  Use the
 //    Config::SetDefault ("ns3::OnOffApplication::PacketSize", UintegerValue (210));
@@ -81,11 +82,18 @@ main (int argc, char *argv[])
     // On
     char string_duration_on[300];
     double duration_on;
-    duration_on = (double) ((packet_length) * 8.0 / (double) (channel_capacity));
+    duration_on = (double) ((packet_size) * 8.0 / (double) (channel_capacity));
     sprintf(string_duration_on, "ns3::ConstantRandomVariable[Constant=" "%64.62f" "]", duration_on);
-    onoff.SetAtrribute("OnTime", StringValue("ns3::ConstantRandomVariable[Constant=0.0001583]"));
+    onoff.SetAttribute("OnTime", StringValue(string_duration_on));
 
-    onoff.SetAtrribute("OffTime", StringValue("ns3::ExponentialRandomVariable[Constant=0.0001583]"));
+    //off
+    char string_duration_off[300];
+    double mean_duration_off;
+    mean_duration_off = (prob_nBytesInPacket + 30.0) * 8.0 / prob_rate - duration_on;
+    sprintf(string_duration_off, "ns3::ExponentialRandomVariable[Mean=" "%64.62f" "]", mean_duration_off);
+    onoff.SetAttribute("OffTime", StringValue(string_duration_off));
+
+
     ApplicationContainer apps = onoff.Install (c.Get (0));
     apps.Start (Seconds (1.0));
     apps.Stop (Seconds (10.0));
