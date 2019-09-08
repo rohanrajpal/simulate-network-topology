@@ -25,17 +25,19 @@ NS_LOG_COMPONENT_DEFINE ("test");
 int
 main (int argc, char *argv[])
 {
-//    #if 1
-//        LogComponentEnable ("test", LOG_LEVEL_INFO);
-//    #endif
+    #if 1
+        LogComponentEnable ("test", LOG_LEVEL_INFO);
+    #endif
+
+
     double prob_rate = 3000000;
     uint32_t packet_size = 2048 / 8;
     uint64_t channel_capacity = 50000000;
     uint32_t prob_nBytesInPacket = 200;
 
     // Set up some default values for the simulation.  Use the
-//    Config::SetDefault ("ns3::OnOffApplication::PacketSize", UintegerValue (210));
-//    Config::SetDefault ("ns3::OnOffApplication::DataRate", StringValue ("448kb/s"));
+//Config::SetDefault ("ns3::OnOffApplication::PacketSize", UintegerValue (210));
+//Config::SetDefault ("ns3::OnOffApplication::DataRate", StringValue ("448kb/s"));
 
     CommandLine cmd;
     bool enableFlowMonitor = false;
@@ -56,7 +58,11 @@ main (int argc, char *argv[])
     PointToPointHelper p2p;
     p2p.SetDeviceAttribute ("DataRate", DataRateValue(DataRate(channel_capacity)));
     p2p.SetChannelAttribute ("Delay", StringValue ("1ms"));
+    p2p.SetQueue ("ns3::DropTailQueue",
+                  "MaxSize", StringValue ("1p"));
+
     NetDeviceContainer d0d1 = p2p.Install (n0n1);
+//    p2p.SetQueue ("ns3::DropTailQueue");
     NetDeviceContainer d2d1 = p2p.Install (n2n1);
 
     // Later, we add IP addresses.
@@ -90,9 +96,11 @@ main (int argc, char *argv[])
     char string_duration_off[300];
     double mean_duration_off;
     mean_duration_off = (prob_nBytesInPacket + 30.0) * 8.0 / prob_rate - duration_on;
+    mean_duration_off = 0.001;
     sprintf(string_duration_off, "ns3::ExponentialRandomVariable[Mean=" "%64.62f" "]", mean_duration_off);
     onoff.SetAttribute("OffTime", StringValue(string_duration_off));
 
+    NS_LOG_INFO (1 / mean_duration_off);
 
     ApplicationContainer apps = onoff.Install (c.Get (0));
     apps.Start (Seconds (1.0));
